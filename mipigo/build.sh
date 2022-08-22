@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 set -e
 
-cd ../minigeth
+cd ../minime
 export GOOS=linux
 export GOARCH=mips
 export GOMIPS=softfloat
-go build -o ../mipigo/minigeth
+go build -o ../mipigo/minime
 
 cd ../mipigo
-file minigeth
+file minime
 
 if [[ ! -d venv ]]; then
     python3 -m venv venv

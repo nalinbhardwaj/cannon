@@ -6,7 +6,7 @@ import hashlib
 from rangetree import RangeTree
 from elftools.elf.elffile import ELFFile
 
-def load_minigeth(fn="minigeth"):
+def load_minigeth(fn="minime"):
   elf = open(fn, "rb")
   data = elf.read()
   elf.seek(0)
@@ -62,7 +62,7 @@ def load_minigeth(fn="minigeth"):
 
 
 if __name__ == "__main__":
-  fn = "minigeth"
+  fn = "minime"
   if len(sys.argv) > 1:
     fn = sys.argv[1]
 

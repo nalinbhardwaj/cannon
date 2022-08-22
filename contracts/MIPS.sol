@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.7.3;
 import "./MIPSMemory.sol";
+import "hardhat/console.sol";
 
 // https://inst.eecs.berkeley.edu/~cs61c/resources/MIPS_Green_Sheet.pdf
 // https://uweb.engr.arizona.edu/~ece369/Resources/spim/MIPSReference.pdf
@@ -113,6 +114,7 @@ contract MIPS {
   }
 
   function Step(bytes32 stateHash) public returns (bytes32 newStateHash) {
+    // stateHash = m.WriteMemory(stateHash, 0xbfc007fc, 11);
     uint32 pc = ReadMemory(stateHash, REG_PC);
     if (pc == 0x5ead0000) {
       return stateHash;
@@ -130,6 +132,9 @@ contract MIPS {
 
     uint32 opcode = insn >> 26; // 6-bits
     uint32 func = insn & 0x3f; // 6-bits
+    console.log('process');
+    console.log(opcode);
+    console.log(func);
 
     // j-type j/jal
     if (opcode == 2 || opcode == 3) {

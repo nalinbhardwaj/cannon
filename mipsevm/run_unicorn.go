@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/binary"
+	"encoding/hex"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -174,40 +175,47 @@ func LoadMappedFileUnicorn(mu uc.Unicorn, fn string, ram map[uint32](uint32), ba
 
 // reimplement simple.py in go
 func RunUnicorn(fn string, ram map[uint32](uint32), checkIO bool, callback func(int, uc.Unicorn, map[uint32](uint32))) {
+	fmt.Println(checkIO)
 	root := "/tmp/cannon/0_13284469"
 	mu := GetHookedUnicorn(root, ram, callback)
 
 	// loop forever to match EVM
 	//mu.MemMap(0x5ead0000, 0x1000)
 	//mu.MemWrite(0xdead0000, []byte{0x08, 0x10, 0x00, 0x00})
+	// mu.MemWrite(0xbfc007fc, []byte{0x00, 0x00, 0x00, 0x08});
 
 	// program
 	dat, _ := ioutil.ReadFile(fn)
 	mu.MemWrite(0, dat)
 
 	// inputs
-	inputs, err := ioutil.ReadFile(fmt.Sprintf("%s/input", root))
+	// inputs, err := ioutil.ReadFile(fmt.Sprintf("%s/input", root))
+	// check(err)
+	hexInputs := "e6be304fdd9eb726595c0038b7be6da9f77756c0fa8977bcc271bcd2362aee46"
+	inputs, err := hex.DecodeString(hexInputs)
 	check(err)
 
-	mu.MemWrite(0x30000000, inputs[0:0xc0])
+	mu.MemWrite(0x30000000, inputs[0:0x20])
 
 	// load into ram
 	LoadData(dat, ram, 0)
 	if checkIO {
-		LoadData(inputs[0:0xc0], ram, 0x30000000)
+		LoadData(inputs[0:0x20], ram, 0x30000000)
 	}
 
 	mu.Start(0, 0x5ead0004)
 
 	if checkIO {
-		outputs, err := ioutil.ReadFile(fmt.Sprintf("%s/output", root))
+		hexOutputs := "49000000"
+		outputs, err := hex.DecodeString(hexOutputs)
+		// outputs, err := ioutil.ReadFile(fmt.Sprintf("%s/output", root))
 		check(err)
 		real := append([]byte{0x13, 0x37, 0xf0, 0x0d}, outputs...)
-		output, _ := mu.MemRead(0x30000800, 0x44)
+		output, _ := mu.MemRead(0x30000800, 0x08)
 		if bytes.Compare(real, output) != 0 {
-			log.Fatal("mismatch output")
+			log.Fatal(fmt.Sprintf("mismatch output %x %x", real, output))
 		} else {
-			fmt.Println("output match")
+			fmt.Println(fmt.Sprintf("output match %x", output))
 		}
 	}
 }

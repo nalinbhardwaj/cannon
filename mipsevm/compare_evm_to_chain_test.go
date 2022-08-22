@@ -12,18 +12,19 @@ import (
 
 func LoadRam() map[uint32](uint32) {
 	ram := make(map[uint32](uint32))
-	fn := "../mipigo/test/test.bin"
-	//fn := "test/bin/add.bin"
+	// fn := "../mipigo/test/test.bin"
+	fn := "test/bin/add.bin"
 	LoadMappedFile(fn, ram, 0)
 	ZeroRegisters(ram)
-	ram[0xC000007C] = 0x5EAD0000
+	ram[0xC000007C] = 0x5EAD0000  // exit
+	// ram[0x3100007fc] = 0x00000008
 	return ram
 }
 
 // go test -run TestCompareEvmChain
 
 func TestCompareEvmChain(t *testing.T) {
-	totalSteps := 20
+	totalSteps := 10
 
 	cchain := make(chan common.Hash, 1)
 	cuni := make(chan common.Hash, 1)
@@ -69,10 +70,13 @@ func TestCompareEvmChain(t *testing.T) {
 	go func() {
 		for step := 0; step < totalSteps; step++ {
 			RunWithRam(ram, 1, 0, "", nil)
+			fmt.Println("evm step", step, ram)
 			root = RamToTrie(ram)
 			cuni <- root
 		}
 	}()
+
+	
 
 	for i := 0; i < totalSteps; i++ {
 		x, y := <-cchain, <-cuni

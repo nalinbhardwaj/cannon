@@ -42,6 +42,10 @@ minigeth_mips:
 	cd mipigo && ./build.sh
 .PHONY: minigeth_mips
 
+minime_mips:
+	cd mipigo && ./build.sh
+.PHONY: minime_mips
+
 minigeth_prefetch:
 	cd minigeth && go build
 .PHONY: minigeth_prefetch
