@@ -23,7 +23,7 @@ func TestCompareUnicornEvm(t *testing.T) {
 		return ret
 	}
 
-	steps := 2000000
+	steps := 10000000
 	//steps := 1165
 	//steps := 1180
 	//steps := 24

@@ -5,6 +5,7 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/oracle"
 )
@@ -18,18 +19,18 @@ func i64tob(val uint64) []byte {
 }
 
 func VDF(x *big.Int) *big.Int {
-	ROUNDS := 100
-	PRIME, ok := common.ParseBig256("28948022309329048855892746252171976963363056481941560715954676764349967630337")
+	ROUNDS := 1
+	PRIME, ok := math.ParseBig256("28948022309329048855892746252171976963363056481941560715954676764349967630337")
 	if !ok {
 		panic("parse error")
 	}
-	POWER, ok := common.ParseBig256("23158417847463239084714197001737581570690445185553317903743794198714690358477")
+	POWER, ok := math.ParseBig256("23158417847463239084714197001737581570690445185553317903743794198714690358477")
 	if !ok {
 		panic("parse error")
 	}
-	y := crypto.Keccak256Hash(x.Bytes())
+	y := crypto.Keccak256Hash(x.Bytes()).Big()
 	for i := 0;i < ROUNDS;i++ {
-		x_next := common.ModExp(x + y, POWER, PRIME)
+		x_next := math.ModExp(x.Add(x, y), POWER, PRIME)
 		y_next := x
 		x, y = x_next, y_next
 	}
@@ -41,9 +42,9 @@ func main() {
 	fmt.Println("inputHash:", inputHash)
 	inputPreimageBytes := oracle.Preimage(inputHash)
 	inputPreimage := common.BytesToHash(inputPreimageBytes)
-	input := inputPreimage.Big().Uint64()
+	input := inputPreimage.Big()
 	fmt.Println(input)
-	output := input + 1
+	output := VDF(input)
 	fmt.Println(output)
-	oracle.OutputBytes(i64tob(output))
+	oracle.OutputBytes(output.Bytes())
 }

@@ -206,12 +206,12 @@ func RunUnicorn(fn string, ram map[uint32](uint32), checkIO bool, callback func(
 	mu.Start(0, 0x5ead0004)
 
 	if checkIO {
-		hexOutputs := "49000000"
+		hexOutputs := "19b88bf2a76caaef5ca15b47376888fb3e5ad6fd29c3d78f5d31ffb3afb28272"
 		outputs, err := hex.DecodeString(hexOutputs)
 		// outputs, err := ioutil.ReadFile(fmt.Sprintf("%s/output", root))
 		check(err)
 		real := append([]byte{0x13, 0x37, 0xf0, 0x0d}, outputs...)
-		output, _ := mu.MemRead(0x30000800, 0x08)
+		output, _ := mu.MemRead(0x30000800, 0x24)
 		if bytes.Compare(real, output) != 0 {
 			log.Fatal(fmt.Sprintf("mismatch output %x %x", real, output))
 		} else {
