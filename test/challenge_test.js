@@ -39,6 +39,7 @@ describe("Challenge contract", function () {
       fs.readFileSync("tmp/cannon/correct/golden.json")
     );
     let goldenRoot = startTrie["root"];
+    console.log("goldenRoot", goldenRoot);
     let finalTrie = JSON.parse(
       fs.readFileSync("tmp/cannon/correct/final.json")
     );
@@ -71,35 +72,35 @@ describe("Challenge contract", function () {
     // the real issue here is from step 0->1 when we write the input hash
     // TODO: prove the challenger wrong?
 
-    let step = 0;
-    let mipsInput = 72;
+    // let step = 0;
+    // let mipsInput = 72;
 
-    let prevTrie = getTrieAtStep(mipsInput, step);
-    let nextTrie = getTrieAtStep(mipsInput, step + 1);
-    let stepPreimages = Object.assign(
-      {},
-      prevTrie["preimages"],
-      nextTrie["preimages"]
-    );
-    console.log("prevTrie[root]", prevTrie["root"]);
-    console.log("nextTrie[root]", nextTrie["root"]);
+    // let prevTrie = getTrieAtStep(mipsInput, step);
+    // let nextTrie = getTrieAtStep(mipsInput, step + 1);
+    // let stepPreimages = Object.assign(
+    //   {},
+    //   prevTrie["preimages"],
+    //   nextTrie["preimages"]
+    // );
+    // console.log("prevTrie[root]", prevTrie["root"]);
+    // console.log("nextTrie[root]", nextTrie["root"]);
 
-    let mdat = m.interface.encodeFunctionData("Step", [prevTrie["root"]]);
-    let stepNodes = await getTrieNodesForCall(
-      c,
-      m.address,
-      mdat,
-      stepPreimages
-    );
-    for (n of stepNodes) {
-      await mm.AddTrieNode(n);
-    }
-    let retTrie = await m.Step(prevTrie["root"]);
-    let retReceipt = await retTrie.wait();
-    console.log(
-      "receipt events new state",
-      retReceipt.events[retReceipt.events.length - 1].args,
-      nextTrie["root"]
-    );
+    // let mdat = m.interface.encodeFunctionData("Step", [prevTrie["root"]]);
+    // let stepNodes = await getTrieNodesForCall(
+    //   c,
+    //   m.address,
+    //   mdat,
+    //   stepPreimages
+    // );
+    // for (n of stepNodes) {
+    //   await mm.AddTrieNode(n);
+    // }
+    // let retTrie = await m.Step(prevTrie["root"]);
+    // let retReceipt = await retTrie.wait();
+    // console.log(
+    //   "receipt events new state",
+    //   retReceipt.events[retReceipt.events.length - 1].args,
+    //   nextTrie["root"]
+    // );
   }).timeout(200_000);
 });

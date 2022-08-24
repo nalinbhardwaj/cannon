@@ -97,13 +97,11 @@ contract Computer {
   function initiateChallenge(uint256 computationId, bytes32 assertionRoot, bytes32 finalSystemState, uint256 stepCount)
     external
     returns (uint256)
-  {
-    bytes32 inputHash;
-    
+  {    
     // Write input hash at predefined memory address.
     Computation storage comp = computations[computationId];
     require(comp.publisher != address(0), "computation doesn't exist");
-    bytes32 startState = mem.WriteBytes32(comp.initialStateHash, 0x30000000, inputHash);
+    bytes32 startState = mem.WriteBytes32(comp.initialStateHash, 0x30000000, comp.inputHash);
 
     // Confirm that `finalSystemState` asserts the state you claim and that the machine is stopped.
     require(mem.ReadMemory(finalSystemState, 0xC0000080) == 0x5EAD0000,

@@ -33,10 +33,6 @@ async function main() {
 
   let startTrie = getTrieAtStep(mipsInput, step);
   let finalTrie = getTrieAtStep(mipsInput, step + 1);
-  let finalPlusTrie = getTrieAtStep(mipsInput, step + 2);
-  console.log("startTrie", startTrie["root"]);
-  console.log("finalTrie", finalTrie["root"]);
-  console.log("finalPlusTrie", finalPlusTrie["root"]);
   console.log("step", step);
   console.log("mipsInput", mipsInput);
   let preimages = Object.assign(
@@ -50,15 +46,15 @@ async function main() {
     await mm.AddTrieNode(n);
   }
 
-  // let ret;
-  // if (isChallenger) {
-  //   ret = await c.confirmStateTransition(challengeId);
-  // } else {
-  //   ret = await c.denyStateTransition(challengeId);
-  // }
+  let ret;
+  if (isChallenger) {
+    ret = await c.confirmStateTransition(challengeId);
+  } else {
+    ret = await c.denyStateTransition(challengeId);
+  }
 
-  // let receipt = await ret.wait();
-  // console.log(receipt.events.map((x) => x.event));
+  let receipt = await ret.wait();
+  console.log(receipt.events.map((x) => x.event));
 }
 
 main()

@@ -41,7 +41,7 @@ async function main() {
     ret = await c.respondState(challengeId, root);
   }
   let receipt = await ret.wait();
-  console.log("done");
+  console.log("done", receipt);
 }
 
 main()

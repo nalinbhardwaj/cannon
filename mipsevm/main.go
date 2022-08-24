@@ -93,8 +93,8 @@ func main() {
 	fileKey := fmt.Sprintf("%s/%s", basedir, inputHash)
 	fmt.Printf("writing file %s\n", fileKey)
 	ioutil.WriteFile(fileKey, inputBytes, 0644)
-	LoadData(inputHashBytes[0:0x20], uniram, 0x30000000)
-	mu.MemWrite(0x30000000, inputHashBytes[0:0x20])
+	LoadData(inputHashBytes, uniram, 0x30000000)
+	mu.MemWrite(0x30000000, inputHashBytes)
 	SyncRegs(mu, uniram)
 
 	mu.Start(0, 0x5ead0004)
