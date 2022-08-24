@@ -1,0 +1,526 @@
+[
+	{
+		"inputs": [
+			{
+				"internalType": "contract IMIPS",
+				"name": "_mips",
+				"type": "address"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "challengeId",
+				"type": "uint256"
+			}
+		],
+		"name": "ChallengeCreated",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "challengeId",
+				"type": "uint256"
+			}
+		],
+		"name": "ChallengerLoses",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "challengeId",
+				"type": "uint256"
+			}
+		],
+		"name": "ChallengerLosesByDefault",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "challengeId",
+				"type": "uint256"
+			}
+		],
+		"name": "ChallengerWins",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "computationId",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "bytes32",
+				"name": "initialStateHash",
+				"type": "bytes32"
+			}
+		],
+		"name": "ComputationCreated",
+		"type": "event"
+	},
+	{
+		"inputs": [],
+		"name": "BINARY_SEARCH_TIMEOUT",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "TIME_FOR_VERIFICATION",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "target",
+				"type": "address"
+			},
+			{
+				"internalType": "bytes",
+				"name": "dat",
+				"type": "bytes"
+			},
+			{
+				"internalType": "bytes[]",
+				"name": "nodes",
+				"type": "bytes[]"
+			}
+		],
+		"name": "callWithTrieNodes",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "challenges",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "L",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "R",
+				"type": "uint256"
+			},
+			{
+				"internalType": "address payable",
+				"name": "challenger",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "computationId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "lastRespondedTime",
+				"type": "uint256"
+			},
+			{
+				"internalType": "address",
+				"name": "lastResponder",
+				"type": "address"
+			},
+			{
+				"internalType": "enum Computer.ChallengeState",
+				"name": "challengeState",
+				"type": "uint8"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "computationToChallenges",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "computations",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "publisher",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "publishTimestamp",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bytes32",
+				"name": "initialStateHash",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "bytes32",
+				"name": "inputHash",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "bytes32",
+				"name": "outputHash",
+				"type": "bytes32"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "challengeId",
+				"type": "uint256"
+			}
+		],
+		"name": "confirmStateTransition",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "challengeId",
+				"type": "uint256"
+			}
+		],
+		"name": "denyStateTransition",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "computationId",
+				"type": "uint256"
+			}
+		],
+		"name": "getComputationData",
+		"outputs": [
+			{
+				"internalType": "bytes32",
+				"name": "",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "bytes32",
+				"name": "",
+				"type": "bytes32"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "challengeId",
+				"type": "uint256"
+			}
+		],
+		"name": "getProposedState",
+		"outputs": [
+			{
+				"internalType": "bytes32",
+				"name": "",
+				"type": "bytes32"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "challengeId",
+				"type": "uint256"
+			}
+		],
+		"name": "getStepNumber",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "computationId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bytes32",
+				"name": "assertionRoot",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "bytes32",
+				"name": "finalSystemState",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "uint256",
+				"name": "stepCount",
+				"type": "uint256"
+			}
+		],
+		"name": "initiateChallenge",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "challengeId",
+				"type": "uint256"
+			}
+		],
+		"name": "isSearching",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "computationId",
+				"type": "uint256"
+			}
+		],
+		"name": "isVerified",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "lastChallengeId",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "lastComputationId",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "challengeId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bytes32",
+				"name": "stateHash",
+				"type": "bytes32"
+			}
+		],
+		"name": "proposeState",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "initialStateHash",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "bytes32",
+				"name": "inputHash",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "bytes32",
+				"name": "outputHash",
+				"type": "bytes32"
+			}
+		],
+		"name": "publishComputation",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "challengeId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bytes32",
+				"name": "stateHash",
+				"type": "bytes32"
+			}
+		],
+		"name": "respondState",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "challengeId",
+				"type": "uint256"
+			}
+		],
+		"name": "timeoutChallenger",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "challengeId",
+				"type": "uint256"
+			}
+		],
+		"name": "timeoutDefender",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"stateMutability": "payable",
+		"type": "receive"
+	}
+]

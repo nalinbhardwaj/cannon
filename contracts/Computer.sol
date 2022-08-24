@@ -379,6 +379,12 @@ contract Computer {
       return computationId;
   }
 
+  function getComputationData(uint256 computationId) public view returns (bytes32, bytes32){
+      Computation storage c = computations[computationId];
+      require(c.publishTimestamp > 0, "Computation ID doesn't not exist");
+      return (c.inputHash, c.outputHash);
+  }
+
   function isVerified(uint256 computationId) public view returns (bool) {
       // if its been some time since computation was created and it hasn't been succesfully challenged
       Computation storage c = computations[computationId];
