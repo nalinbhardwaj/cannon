@@ -58,88 +58,63 @@ exit_trap() {
 }
 trap "exit_trap" SIGINT SIGTERM EXIT
 
-# --- BOOT MAINNET FORK --------------------------------------------------------
-
-if [[ ! "$SKIP_NODE" ]]; then
-    NODE_LOG="challenge_simple_node.log"
-
-    shout "BOOTING MAINNET FORK NODE IN BACKGROUND (LOG: $NODE_LOG)"
-
-    # get directory containing this file
-    SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
-
-    # run a hardhat mainnet fork node
-    "$SCRIPT_DIR/forked_node.sh" > "$NODE_LOG" 2>&1 &
-
-    # give the node some time to boot up
-    sleep 10
-fi
-
 # --- CHALLENGE SETUP ----------------------------------------------------------
 
-# hardhat network to use
-NETWORK=${NETWORK:-l1}
-export NETWORK
+# # hardhat network to use
+# NETWORK=${NETWORK:-l1}
+# export NETWORK
 
 # challenge ID, read by respond.js and assert.js
 export ID=0
 
-# block whose transition will be challenged
-# this variable is read by challenge.js, respond.js and assert.js
-BLOCK=${BLOCK:-13284469}
-export BLOCK
-
-# block whose pre-state is used by the challenger instead of the challenged block's pre-state
-WRONG_BLOCK=${WRONG_BLOCK:-13284491}
-
 # clear data from previous runs
-mkdir -p /tmp/cannon /tmp/cannon_fault && rm -rf /tmp/cannon/* /tmp/cannon_fault/*
+mkdir -p tmp/cannon && rm -rf tmp/cannon/*
+mkdir -p tmp/cannon/fault && rm -rf tmp/cannon/fault/*
+mkdir -p tmp/cannon/correct && rm -rf tmp/cannon/correct/*
 
-# stored in /tmp/cannon/golden.json
-shout "GENERATING INITIAL MEMORY STATE CHECKPOINT"
-mipsevm/mipsevm
+# stored in tmp/cannon/correct/{golden, final}.json
+shout "GENERATING INITIAL AND FINAL MEMORY STATE CHECKPOINT"
+BASEDIR=tmp/cannon/correct ./mipsevm/mipsevm 72
+
+# stored in tmp/cannon/fault/{golden, final}.json
+shout "GENERATING FAULTY INITIAL AND FINAL MEMORY STATE CHECKPOINT"
+BASEDIR=tmp/cannon/fault ./mipsevm/mipsevm 73
 
 shout "DEPLOYING CONTRACTS"
-npx hardhat run scripts/deploy.js --network $NETWORK
+BASEDIR=tmp/cannon npx hardhat run scripts/deploy.js --network localhost
 
 # challenger will use same initial memory checkpoint and deployed contracts
-cp /tmp/cannon/{golden,deployed}.json /tmp/cannon_fault/
+cp tmp/cannon/deployed.json tmp/cannon/correct/deployed.json
+cp tmp/cannon/deployed.json tmp/cannon/fault/deployed.json
 
-shout "FETCHING PREIMAGES FOR REAL BLOCK"
-minigeth/go-ethereum $BLOCK
+# # pretend the wrong block's input, checkpoints and preimages are the right block's
+# ln -s /tmp/cannon_fault/0_$WRONG_BLOCK /tmp/cannon_fault/0_$BLOCK
 
-shout "COMPUTING REAL MIPS FINAL MEMORY CHECKPOINT"
-mipsevm/mipsevm $BLOCK
+# --- PUBLISH COMPUTATION ------------------------------------------------------
 
-shout "FETCHING PREIMAGES FOR WRONG BLOCK"
-BASEDIR=/tmp/cannon_fault minigeth/go-ethereum $WRONG_BLOCK
-
-shout "COMPUTING FAKE MIPS FINAL MEMORY CHECKPOINT"
-BASEDIR=/tmp/cannon_fault mipsevm/mipsevm $WRONG_BLOCK
-
-# pretend the wrong block's input, checkpoints and preimages are the right block's
-ln -s /tmp/cannon_fault/0_$WRONG_BLOCK /tmp/cannon_fault/0_$BLOCK
+shout "PUBLISHING COMPUTATION"
+BASEDIR=tmp/cannon/correct npx hardhat run scripts/publish.js --network localhost
 
 # --- BINARY SEARCH ------------------------------------------------------------
 
 shout "STARTING CHALLENGE"
-BASEDIR=/tmp/cannon_fault npx hardhat run scripts/challenge.js --network $NETWORK
+BASEDIR=tmp/cannon/fault npx hardhat run scripts/challenge.js --network localhost
 
 shout "BINARY SEARCH"
 for i in {1..23}; do
     echo ""
     echo "--- STEP $i / 23 ---"
     echo ""
-    BASEDIR=/tmp/cannon_fault CHALLENGER=1 npx hardhat run scripts/respond.js --network $NETWORK
-    npx hardhat run scripts/respond.js --network $NETWORK
+    BASEDIR=tmp/cannon/fault CHALLENGER=1 MIPS_INPUT=73 npx hardhat run scripts/respond.js --network localhost
+    BASEDIR=tmp/cannon/correct CHALLENGER=0 MIPS_INPUT=72 npx hardhat run scripts/respond.js --network localhost
 done
 
 # --- SINGLE STEP EXECUTION ----------------------------------------------------
 
 shout "ASSERTING AS CHALLENGER (should fail)"
 set +e # this should fail!
-BASEDIR=/tmp/cannon_fault CHALLENGER=1 npx hardhat run scripts/assert.js --network $NETWORK
+BASEDIR=tmp/cannon/fault CHALLENGER=1 MIPS_INPUT=73 npx hardhat run scripts/assert.js --network localhost
 set -e
 
 shout "ASSERTING AS DEFENDER (should pass)"
-npx hardhat run scripts/assert.js --network $NETWORK
+BASEDIR=tmp/cannon/correct CHALLENGER=0 MIPS_INPUT=72 npx hardhat run scripts/assert.js --network localhost

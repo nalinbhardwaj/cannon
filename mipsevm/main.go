@@ -1,14 +1,13 @@
 package main
 
 import (
-	"bytes"
-	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"strconv"
 
+	"github.com/ethereum/go-ethereum/crypto"
 	uc "github.com/unicorn-engine/unicorn/bindings/go/unicorn"
 )
 
@@ -19,115 +18,99 @@ func WriteCheckpoint(ram map[uint32](uint32), fn string, step int) {
 	ioutil.WriteFile(fn, dat, 0644)
 }
 
-func main() {
-	root := ""
-	target := -1
-
-	regfault := -1
-	regfault_str, regfault_valid := os.LookupEnv("REGFAULT")
-	if regfault_valid {
-		regfault, _ = strconv.Atoi(regfault_str)
+func i64tob(val uint64) []byte {
+	r := make([]byte, 8)
+	for i := uint64(0); i < 8; i++ {
+		r[i] = byte((val >> (i * 8)) & 0xff)
 	}
+	return r
+}
 
+func i32tobrev(val uint32) []byte {
+	r := make([]byte, 4)
+	for i := uint32(0); i < 4; i++ {
+		r[3 - i] = byte((val >> (8 * i)) & 0xff)
+	}
+	return r
+}
+
+type Hashes struct {
+	InputHash string
+	OutputHash string
+}
+
+func main() {
 	basedir := os.Getenv("BASEDIR")
 	if len(basedir) == 0 {
-		basedir = "/tmp/cannon"
+		basedir = "tmp/cannon/minime"
 	}
+	target_step_str := os.Getenv("TARGET_STEP")
+	if len(target_step_str) == 0 {
+		target_step_str = "-1"
+	}
+	target_step, _ := strconv.Atoi(target_step_str)
+	fmt.Printf("target_step %d\n", target_step)
+
+	fn := "mipigo/minime.bin"
+
+	inputNum := 72
 	if len(os.Args) > 1 {
-		blockNumber, _ := strconv.Atoi(os.Args[1])
-		root = fmt.Sprintf("%s/%d_%d", basedir, 0, blockNumber)
-	}
-	if len(os.Args) > 2 {
-		target, _ = strconv.Atoi(os.Args[2])
-	}
-	evm := false
-	if len(os.Args) > 3 && os.Args[3] == "evm" {
-		evm = true
+		inputNum, _ = strconv.Atoi(os.Args[1])
 	}
 
-	// step 1, generate the checkpoints every million steps using unicorn
-	ram := make(map[uint32](uint32))
-
+	uniram := make(map[uint32](uint32))
 	lastStep := 1
-	if evm {
-		// TODO: fix this
-		/*ZeroRegisters(ram)
-		LoadMappedFile("mipigo/minigeth.bin", ram, 0)
-		WriteCheckpoint(ram, "/tmp/cannon/golden.json", -1)
-		LoadMappedFile(fmt.Sprintf("%s/input", root), ram, 0x30000000)
-		RunWithRam(ram, target-1, 0, root, nil)
-		lastStep += target - 1
-		fn := fmt.Sprintf("%s/checkpoint_%d.json", root, lastStep)
-		WriteCheckpoint(ram, fn, lastStep)*/
-	} else {
-		mu := GetHookedUnicorn(root, ram, func(step int, mu uc.Unicorn, ram map[uint32](uint32)) {
-			// it seems this runs before the actual step happens
-			// this can be raised to 10,000,000 if the files are too large
-			//if (target == -1 && step%10000000 == 0) || step == target {
-			// first run checkpointing is disabled for now since is isn't used
-			if step == regfault {
-				fmt.Printf("regfault at step %d\n", step)
-				mu.RegWrite(uc.MIPS_REG_V0, 0xbabababa)
-			}
-			if step == target {
-				SyncRegs(mu, ram)
-				fn := fmt.Sprintf("%s/checkpoint_%d.json", root, step)
-				WriteCheckpoint(ram, fn, step)
-				if step == target {
-					// done
-					mu.RegWrite(uc.MIPS_REG_PC, 0x5ead0004)
-				}
-			}
-			lastStep = step + 1
-		})
 
-		ZeroRegisters(ram)
-		// not ready for golden yet
-		LoadMappedFileUnicorn(mu, "mipigo/minigeth.bin", ram, 0)
-		if root == "" {
-			WriteCheckpoint(ram, fmt.Sprintf("%s/golden.json", basedir), -1)
-			fmt.Println("exiting early without a block number")
-			os.Exit(0)
+	callback := func(step int, mu uc.Unicorn, ram map[uint32](uint32)) {
+		// SyncRegs(mu, ram) // not needed until writes
+		if target_step >= 0 && step == target_step {
+			SyncRegs(mu, uniram)
+			WriteCheckpoint(uniram, fmt.Sprintf("%s/checkpoint-%s.json", basedir, target_step_str), step)	
+			mu.RegWrite(uc.MIPS_REG_PC, 0x5ead0004)
 		}
-
-		LoadMappedFileUnicorn(mu, fmt.Sprintf("%s/input", root), ram, 0x30000000)
-
-		mu.Start(0, 0x5ead0004)
-		SyncRegs(mu, ram)
+		lastStep = step + 1
 	}
 
-	if target == -1 {
-		if ram[0x30000800] != 0x1337f00d {
-			log.Fatal("failed to output state root, exiting")
-		}
+	mu := GetHookedUnicorn(basedir, uniram, callback)
 
-		output_filename := fmt.Sprintf("%s/output", root)
-		outputs, err := ioutil.ReadFile(output_filename)
-		check(err)
-		real := append([]byte{0x13, 0x37, 0xf0, 0x0d}, outputs...)
+	// loop forever to match EVM
+	//mu.MemMap(0x5ead0000, 0x1000)
+	//mu.MemWrite(0xdead0000, []byte{0x08, 0x10, 0x00, 0x00})
+	// mu.MemWrite(0xbfc007fc, []byte{0x00, 0x00, 0x00, 0x08});
 
-		output := []byte{}
-		for i := 0; i < 0x44; i += 4 {
-			t := make([]byte, 4)
-			binary.BigEndian.PutUint32(t, ram[uint32(0x30000800+i)])
-			output = append(output, t...)
-		}
+	// load into ram
+	ZeroRegisters(uniram)
+	LoadMappedFileUnicorn(mu, fn, uniram, 0)
+	WriteCheckpoint(uniram, fmt.Sprintf("%s/golden.json", basedir), -1)
 
-		if bytes.Compare(real, output) != 0 {
-			fmt.Println("MISMATCH OUTPUT, OVERWRITING!!!")
-			ioutil.WriteFile(output_filename, output[4:], 0644)
-		} else {
-			fmt.Println("output match")
-		}
+	// inputs
+	// inputs, err := ioutil.ReadFile(fmt.Sprintf("%s/input", root))
+	// check(err)
+	inputBytes := i32tobrev(uint32(inputNum))
+	fmt.Printf("%x\n", inputBytes)
+	inputHash := crypto.Keccak256Hash(inputBytes)
+	inputHashBytes := inputHash.Bytes()
+	fileKey := fmt.Sprintf("%s/%s", basedir, inputHash)
+	fmt.Printf("writing file %s\n", fileKey)
+	ioutil.WriteFile(fileKey, inputBytes, 0644)
+	LoadData(inputHashBytes[0:0x20], uniram, 0x30000000)
+	mu.MemWrite(0x30000000, inputHashBytes[0:0x20])
+	SyncRegs(mu, uniram)
 
-		WriteCheckpoint(ram, fmt.Sprintf("%s/checkpoint_final.json", root), lastStep)
+	mu.Start(0, 0x5ead0004)
 
+	if target_step == -1 {
+		output, _ := mu.MemRead(0x30000800, 0x24)
+		magic_number := output[0:0x4]
+		output_hash := output[0x4:0x24]
+		fmt.Printf("output: %x\n", output)
+		fmt.Printf("magic number: %x\n", magic_number)
+		fmt.Printf("output hash: %x\n", output_hash)
+		SyncRegs(mu, uniram)
+		WriteCheckpoint(uniram, fmt.Sprintf("%s/final.json", basedir), lastStep)
+		data := Hashes{fmt.Sprintf("%x", inputHash), fmt.Sprintf("%x", output_hash)}
+		hashesFileKey := fmt.Sprintf("%s/hashes.json", basedir)
+		b, _ := json.Marshal(data)
+		ioutil.WriteFile(hashesFileKey, b, 0644)
 	}
-
-	// step 2 (optional), validate each 1 million chunk in EVM
-
-	// step 3 (super optional) validate each 1 million chunk on chain
-
-	//RunWithRam(ram, steps, debug, nil)
-
 }

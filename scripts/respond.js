@@ -1,41 +1,47 @@
-const fs = require("fs")
-const { deployed, getTrieNodesForCall, getTrieAtStep } = require("../scripts/lib")
+const fs = require("fs");
+const {
+  deployed,
+  getTrieNodesForCall,
+  getTrieAtStep,
+} = require("../scripts/lib");
 
 async function main() {
-  let [c, m, mm] = await deployed()
+  let [c, m, mm] = await deployed();
 
-  const challengeId = parseInt(process.env.ID)
-  const blockNumberN = parseInt(process.env.BLOCK)
-  const isChallenger = process.env.CHALLENGER == "1"
+  const challengeId = parseInt(process.env.ID);
+  const isChallenger = process.env.CHALLENGER == "1";
+  const mipsInput = process.env.MIPS_INPUT;
 
-  let step = (await c.getStepNumber(challengeId)).toNumber()
-  console.log("searching step", step, "at block", blockNumberN)
+  let step = (await c.getStepNumber(challengeId)).toNumber();
+  console.log("searching step", step);
 
   if (!(await c.isSearching(challengeId))) {
-    console.log("search is done")
-    return
+    console.log("search is done");
+    return;
   }
 
   // see if it's proposed or not
-  const proposed = await c.getProposedState(challengeId)
-  const isProposing = proposed == "0x0000000000000000000000000000000000000000000000000000000000000000"
+  const proposed = await c.getProposedState(challengeId);
+  const isProposing =
+    proposed ==
+    "0x0000000000000000000000000000000000000000000000000000000000000000";
   if (isProposing != isChallenger) {
-    console.log("bad challenger state")
-    return
+    console.log("bad challenger state");
+    return;
   }
-  console.log("isProposing", isProposing)
-  let thisTrie = getTrieAtStep(blockNumberN, step)
-  const root = thisTrie['root']
-  console.log("new root", root)
+  console.log("isProposing", isProposing);
+  let thisTrie = getTrieAtStep(mipsInput, step);
+  const root = thisTrie["root"];
+  console.log("new root", root);
 
-  let ret
+  let ret;
   if (isProposing) {
-    ret = await c.proposeState(challengeId, root)
+    ret = await c.proposeState(challengeId, root);
   } else {
-    ret = await c.respondState(challengeId, root)
+    ret = await c.respondState(challengeId, root);
   }
-  let receipt = await ret.wait()
-  console.log("done", receipt.blockNumber)
+  let receipt = await ret.wait();
+  console.log("done");
 }
 
 main()

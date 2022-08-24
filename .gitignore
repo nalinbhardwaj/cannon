@@ -5,3 +5,4 @@ cache
 venv
 .idea
 *.log
+tmp

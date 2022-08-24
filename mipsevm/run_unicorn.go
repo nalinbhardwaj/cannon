@@ -199,6 +199,7 @@ func RunUnicorn(fn string, ram map[uint32](uint32), checkIO bool, callback func(
 
 	// load into ram
 	LoadData(dat, ram, 0)
+	WriteCheckpoint(ram, fmt.Sprintf("%s/golden.json", root), -1)
 	if checkIO {
 		LoadData(inputs[0:0x20], ram, 0x30000000)
 	}
@@ -212,6 +213,7 @@ func RunUnicorn(fn string, ram map[uint32](uint32), checkIO bool, callback func(
 		check(err)
 		real := append([]byte{0x13, 0x37, 0xf0, 0x0d}, outputs...)
 		output, _ := mu.MemRead(0x30000800, 0x24)
+		WriteCheckpoint(ram, fmt.Sprintf("%s/final.json", root), 8273353)
 		if bytes.Compare(real, output) != 0 {
 			log.Fatal(fmt.Sprintf("mismatch output %x %x", real, output))
 		} else {

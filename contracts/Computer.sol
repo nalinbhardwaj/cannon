@@ -3,6 +3,7 @@ pragma solidity ^0.7.3;
 pragma experimental ABIEncoderV2;
 
 import "./lib/Lib_RLPReader.sol";
+import "hardhat/console.sol";
 
 /// @notice MIPS virtual machine interface
 interface IMIPS {
@@ -44,7 +45,7 @@ contract Computer {
 
   uint public constant BINARY_SEARCH_TIMEOUT = 60 * 10;
 
-  constructor(IMIPS _mips, bytes32 _globalStartState) {
+  constructor(IMIPS _mips) {
     mips = _mips;
     mem = _mips.m();
   }
@@ -100,8 +101,9 @@ contract Computer {
     bytes32 inputHash;
     
     // Write input hash at predefined memory address.
-    bytes32 startState = globalStartState;
-    startState = mem.WriteBytes32(startState, 0x30000000, inputHash);
+    Computation storage comp = computations[computationId];
+    require(comp.publisher != address(0), "computation doesn't exist");
+    bytes32 startState = mem.WriteBytes32(comp.initialStateHash, 0x30000000, inputHash);
 
     // Confirm that `finalSystemState` asserts the state you claim and that the machine is stopped.
     require(mem.ReadMemory(finalSystemState, 0xC0000080) == 0x5EAD0000,
@@ -121,9 +123,9 @@ contract Computer {
     c.assertedState[stepCount] = finalSystemState;
     c.L = 0;
     c.R = stepCount;
-    c.challengeState = ChallengeData.BINARY_SEARCH;
+    c.challengeState = ChallengeState.BINARY_SEARCH;
     c.lastResponder = msg.sender;
-    c.lastRespondedTime = now;
+    c.lastRespondedTime = block.timestamp;
     c.computationId = computationId;
 
     computationToChallenges[computationId].push(challengeId);
@@ -193,7 +195,7 @@ contract Computer {
     require(c.assertedState[stepNumber] == bytes32(0), "state already proposed");
     c.assertedState[stepNumber] = stateHash;
     c.lastResponder = c.challenger;
-    c.lastRespondedTime = now;
+    c.lastRespondedTime = block.timestamp;
   }
 
   /// @notice The defender can call this function to submit the state hash for the next step
@@ -204,7 +206,7 @@ contract Computer {
   function respondState(uint256 challengeId, bytes32 stateHash) external {
     ChallengeData storage c = challenges[challengeId];
     require(c.challenger != address(0), "invalid challenge");
-    require(msg.sender == computations[computationId].publisher, "not a publisher");
+    require(msg.sender == computations[challenges[challengeId].computationId].publisher, "not a publisher");
     require(isSearching(challengeId), "must be searching");
 
     uint256 stepNumber = getStepNumber(challengeId);
@@ -215,7 +217,7 @@ contract Computer {
     // defender terminate the proof early (and not via a timeout) after the binary search completes.
     c.defendedState[stepNumber] = stateHash;
     c.lastResponder = msg.sender;
-    c.lastRespondedTime = now;
+    c.lastRespondedTime = block.timestamp;
 
     // update binary search bounds
     if (c.assertedState[stepNumber] == c.defendedState[stepNumber]) {
@@ -293,6 +295,17 @@ contract Computer {
       return;
     }
 
+    console.log("L");
+    console.log(c.L);
+    console.log("R");
+    console.log(c.R);
+    console.log("stepState");
+    console.log(uint256(stepState));
+    console.log("c.defendedState[c.R]");
+    console.log(uint256(c.defendedState[c.R]));
+    console.log("c.defendedState[c.L]");
+    console.log(uint256(c.defendedState[c.L]));
+
     require(stepState == c.defendedState[c.R], "wrong asserted state for defender");
     c.challengeState = ChallengeState.DEFENDER_WINS;
 
@@ -316,8 +329,8 @@ contract Computer {
     require(c.challenger != address(0), "invalid challenge");
     require(isSearching(challengeId), "binary search finished");
 
-    require(lastResponder != c.challenger, "challenger is waiting for response");
-    require((now - lastRespondedTime) > BINARY_SEARCH_TIMEOUT, "timeout not finished");
+    require(c.lastResponder != c.challenger, "challenger is waiting for response");
+    require((block.timestamp - c.lastRespondedTime) > BINARY_SEARCH_TIMEOUT, "timeout not finished");
 
     c.challengeState = ChallengeState.DEFENDER_WINS;
 
@@ -329,8 +342,8 @@ contract Computer {
     require(c.challenger != address(0), "invalid challenge");
     require(isSearching(challengeId), "binary search finished");
 
-    require(lastResponder == computations[c.computationId].publisher , "defender is waiting for response");
-    require((now - lastRespondedTime) > BINARY_SEARCH_TIMEOUT, "timeout not finished");
+    require(c.lastResponder == computations[c.computationId].publisher , "defender is waiting for response");
+    require((block.timestamp - c.lastRespondedTime) > BINARY_SEARCH_TIMEOUT, "timeout not finished");
 
     c.challengeState = ChallengeState.CHALLENGER_WINS;
 
@@ -342,6 +355,7 @@ contract Computer {
   struct Computation {
       address publisher;
       uint publishTimestamp;
+      bytes32 initialStateHash;
       bytes32 inputHash;
       bytes32 outputHash;
   }
@@ -351,24 +365,25 @@ contract Computer {
   mapping(uint256 => Computation) public computations;
 
   /// @notice Emitted when a new computation is created.
-  event ComputationCreated(uint256 computationId);
+  event ComputationCreated(uint256 computationId, bytes32 initialStateHash);
 
-  function publishComputation(bytes input, bytes output) public returns (uint256){    
+  function publishComputation(bytes32 initialStateHash, bytes32 inputHash, bytes32 outputHash) public returns (uint256){    
       uint256 computationId = lastComputationId++;
       Computation storage c = computations[computationId];
 
       c.publisher = msg.sender;
-      c.publishTimestamp = now;
+      c.publishTimestamp = block.timestamp;
+      c.initialStateHash = initialStateHash;
       c.inputHash = inputHash;
       c.outputHash = outputHash;
 
-      emit ComputationCreated(computationId);
+      emit ComputationCreated(computationId, initialStateHash);
       return computationId;
   }
 
-  function isVerified(uint256 computationId) public view return bool {
+  function isVerified(uint256 computationId) public view returns (bool) {
       // if its been some time since computation was created and it hasn't been succesfully challenged
-      Computation c = computations[computationId];
+      Computation storage c = computations[computationId];
       require(c.publishTimestamp > 0, "Computation ID doesn't not exist");
       
       for (uint256 i = 0; i < computationToChallenges[computationId].length;i++) {
@@ -377,7 +392,7 @@ contract Computer {
           return false;
         }
       }
-      uint timeSincePublished = (now - c.publishTimestamp); 
+      uint timeSincePublished = (block.timestamp - c.publishTimestamp); 
       return timeSincePublished >= TIME_FOR_VERIFICATION;
   }
 }

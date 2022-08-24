@@ -1,15 +1,15 @@
-const { deploy } = require("../scripts/lib")
-const fs = require("fs")
+const { deploy } = require("../scripts/lib");
+const fs = require("fs");
 
 async function main() {
-  let [c, m, mm] = await deploy()
+  let [comp, m, mm] = await deploy();
   let json = {
-    "Challenge": c.address,
-    "MIPS": m.address,
-    "MIPSMemory": mm.address,
-  }
-  console.log("deployed", json)
-  fs.writeFileSync("/tmp/cannon/deployed.json", JSON.stringify(json))
+    Computer: comp.address,
+    MIPS: m.address,
+    MIPSMemory: mm.address,
+  };
+  console.log("deployed", json);
+  fs.writeFileSync("tmp/cannon/deployed.json", JSON.stringify(json));
 }
 
 main()
