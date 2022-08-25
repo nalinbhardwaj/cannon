@@ -53,10 +53,12 @@ func main() {
 
 	fn := "mipigo/minime.bin"
 
-	inputNum := 72
+	inputFileStub := "input"
 	if len(os.Args) > 1 {
-		inputNum, _ = strconv.Atoi(os.Args[1])
+		inputFileStub = os.Args[1]
 	}
+	inputFile := fmt.Sprintf("%s/%s", basedir, inputFileStub)
+
 
 	uniram := make(map[uint32](uint32))
 	lastStep := 1
@@ -86,8 +88,9 @@ func main() {
 	// inputs
 	// inputs, err := ioutil.ReadFile(fmt.Sprintf("%s/input", root))
 	// check(err)
-	inputBytes := i32tobrev(uint32(inputNum))
-	fmt.Printf("%x\n", inputBytes)
+	inputBytes, err := ioutil.ReadFile(inputFile)
+	check(err)
+	// fmt.Printf("%x\n", inputBytes)
 	inputHash := crypto.Keccak256Hash(inputBytes)
 	inputHashBytes := inputHash.Bytes()
 	fileKey := fmt.Sprintf("%s/%s", basedir, inputHash)
