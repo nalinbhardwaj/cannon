@@ -5,23 +5,26 @@ const {
   getTrieAtStep,
 } = require("../scripts/lib");
 
-async function main() {
-  let [c, m, mm] = await deployed();
-
+async function main(){
   const challengeId = parseInt(process.env.ID);
   const isChallenger = process.env.CHALLENGER == "1";
   const mipsInput = process.env.MIPS_INPUT;
+  respondChallenge(challengeId, isChallenger, mipsInput);
+}
 
-  let step = (await c.getStepNumber(challengeId)).toNumber();
+async function respondChallenge(challengeId, isChallenger, mipsInput) {
+  let [contract, m, mm] = await deployed();
+
+  let step = (await contract.getStepNumber(challengeId)).toNumber();
   console.log("searching step", step);
 
-  if (!(await c.isSearching(challengeId))) {
+  if (!(await contract.isSearching(challengeId))) {
     console.log("search is done");
     return;
   }
 
   // see if it's proposed or not
-  const proposed = await c.getProposedState(challengeId);
+  const proposed = await contract.getProposedState(challengeId);
   const isProposing =
     proposed ==
     "0x0000000000000000000000000000000000000000000000000000000000000000";
@@ -32,16 +35,15 @@ async function main() {
   console.log("isProposing", isProposing);
   let thisTrie = getTrieAtStep(mipsInput, step);
   const root = thisTrie["root"];
-  console.log("new root", root);
 
   let ret;
   if (isProposing) {
-    ret = await c.proposeState(challengeId, root);
+    ret = await contract.proposeState(challengeId, root);
   } else {
-    ret = await c.respondState(challengeId, root);
+    ret = await contract.respondState(challengeId, root);
   }
   let receipt = await ret.wait();
-  console.log("done", receipt);
+  console.log("done responding", receipt);
 }
 
 main()

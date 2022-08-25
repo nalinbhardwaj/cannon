@@ -4,12 +4,16 @@ const {
   getTrieAtStep,
 } = require("../scripts/lib");
 
-async function main() {
-  let [c, m, mm] = await deployed();
 
+async function main(){
   const challengeId = parseInt(process.env.ID);
   const isChallenger = process.env.CHALLENGER == "1";
   const mipsInput = process.env.MIPS_INPUT;
+  finishChallenge(challengeId, isChallenger, mipsInput);
+}
+
+async function finishChallenge(challengeId, isChallenger, mipsInput) {
+  let [c, m, mm] = await deployed();
 
   let step = (await c.getStepNumber(challengeId)).toNumber();
   console.log("searching step", step);

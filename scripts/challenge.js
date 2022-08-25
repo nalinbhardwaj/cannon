@@ -6,10 +6,14 @@ const {
   getTrieNodesForCall,
 } = require("../scripts/lib");
 
-async function main() {
-  const computationId = 1;
+async function main(){
 
-  let [c, m, mm] = await deployed();
+  initiateChallenge(1);
+}
+
+async function initiateChallenge(computationId) {
+
+  const [c, m, mm] = await deployed();
 
   console.log("contract addresses", c.address, m.address, mm.address);
 
@@ -18,24 +22,24 @@ async function main() {
   const outputHash = hashes["OutputHash"];
 
   // TODO: move this to lib, it's shared with the test
-  let startTrie = JSON.parse(fs.readFileSync(basedir + "/golden.json"));
-  let finalTrie = JSON.parse(fs.readFileSync(basedir + "/final.json"));
+  const startTrie = JSON.parse(fs.readFileSync(basedir + "/golden.json"));
+  const finalTrie = JSON.parse(fs.readFileSync(basedir + "/final.json"));
 
-  let preimages = Object.assign(
+  const preimages = Object.assign(
     {},
     startTrie["preimages"],
     finalTrie["preimages"]
   );
   const finalSystemState = finalTrie["root"];
 
-  let args = [
+  const args = [
     computationId,
     "0x" + outputHash,
     finalSystemState,
     finalTrie["step"],
   ];
-  let cdat = c.interface.encodeFunctionData("initiateChallenge", args);
-  let nodes = await getTrieNodesForCall(c, c.address, cdat, preimages);
+  const cdat = c.interface.encodeFunctionData("initiateChallenge", args);
+  const nodes = await getTrieNodesForCall(c, c.address, cdat, preimages);
 
   // run "on chain"
   for (n of nodes) {
@@ -44,11 +48,12 @@ async function main() {
   // TODO: Setting the gas limit explicitly here shouldn't be necessary, for some
   //    weird reason (to be investigated), it is for L2.
   //  let ret = await c.initiateChallenge(...args)
-  let ret = await c.initiateChallenge(...args, { gasLimit: 10_000_000 });
-  let receipt = await ret.wait();
+  const ret = await c.initiateChallenge(...args, { gasLimit: 10_000_000 });
+  const receipt = await ret.wait();
   // ChallengeCreated event
-  let challengeId = receipt.events[0].args["challengeId"].toNumber();
+  const challengeId = receipt.events[0].args["challengeId"].toNumber();
   console.log("new challenge with id:", challengeId);
+  return challengeId
 }
 
 main()

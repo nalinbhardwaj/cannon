@@ -39,25 +39,7 @@ type Hashes struct {
 	OutputHash string
 }
 
-func main() {
-	basedir := os.Getenv("BASEDIR")
-	if len(basedir) == 0 {
-		basedir = "tmp/cannon/minime"
-	}
-	target_step_str := os.Getenv("TARGET_STEP")
-	if len(target_step_str) == 0 {
-		target_step_str = "-1"
-	}
-	target_step, _ := strconv.Atoi(target_step_str)
-	fmt.Printf("target_step %d\n", target_step)
-
-	fn := "mipigo/minime.bin"
-
-	inputNum := 72
-	if len(os.Args) > 1 {
-		inputNum, _ = strconv.Atoi(os.Args[1])
-	}
-
+func run_uni(basedir string, programFile string, target_step int, inputNum int){
 	uniram := make(map[uint32](uint32))
 	lastStep := 1
 
@@ -80,7 +62,7 @@ func main() {
 
 	// load into ram
 	ZeroRegisters(uniram)
-	LoadMappedFileUnicorn(mu, fn, uniram, 0)
+	LoadMappedFileUnicorn(mu, programFile, uniram, 0)
 	WriteCheckpoint(uniram, fmt.Sprintf("%s/golden.json", basedir), -1)
 
 	// inputs
@@ -113,4 +95,26 @@ func main() {
 		b, _ := json.Marshal(data)
 		ioutil.WriteFile(hashesFileKey, b, 0644)
 	}
+}
+
+func main() {
+	basedir := os.Getenv("BASEDIR")
+	if len(basedir) == 0 {
+		basedir = "tmp/cannon/minime"
+	}
+	target_step_str := os.Getenv("TARGET_STEP")
+	if len(target_step_str) == 0 {
+		target_step_str = "-1"
+	}
+	target_step, _ := strconv.Atoi(target_step_str)
+	fmt.Printf("target_step %d\n", target_step)
+
+	fn := "mipigo/minime.bin"
+
+	inputNum := 72
+	if len(os.Args) > 1 {
+		inputNum, _ = strconv.Atoi(os.Args[1])
+	}
+	run_uni(basedir, fn, target_step, inputNum)
+
 }
