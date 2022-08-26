@@ -53,10 +53,40 @@ func main() {
 
 	fn := "mipigo/minime.bin"
 
-	inputNum := 72
-	if len(os.Args) > 1 {
-		inputNum, _ = strconv.Atoi(os.Args[1])
-	}
+	inpFileStub := "PM_CRYSTAL.inp"
+	inpFile := fmt.Sprintf("%s/%s", basedir, inpFileStub)
+	inpBytes, err := ioutil.ReadFile(inpFile)
+	check(err)
+	inpHash := crypto.Keccak256Hash(inpBytes)
+	inpHashBytes := inpHash.Bytes()
+	inpFileKey := fmt.Sprintf("%s/%s", basedir, inpHash)
+	fmt.Printf("writing file %s\n", inpFileKey)
+	ioutil.WriteFile(inpFileKey, inpBytes, 0644)
+	savFileStub := "PM_CRYSTAL.sav"
+	savFile := fmt.Sprintf("%s/%s", basedir, savFileStub)
+	savBytes, err := ioutil.ReadFile(savFile)
+	check(err)
+	savHash := crypto.Keccak256Hash(savBytes)
+	savHashBytes := savHash.Bytes()
+	savFileKey := fmt.Sprintf("%s/%s", basedir, savHash)
+	fmt.Printf("writing file %s\n", savFileKey)
+	ioutil.WriteFile(savFileKey, savBytes, 0644)
+	romFileStub := "PM_CRYSTAL.gbc"
+	romFile := fmt.Sprintf("%s/%s", basedir, romFileStub)
+	romBytes, err := ioutil.ReadFile(romFile)
+	check(err)
+	romHash := crypto.Keccak256Hash(romBytes)
+	romHashBytes := romHash.Bytes()
+	romFileKey := fmt.Sprintf("%s/%s", basedir, romHash)
+	fmt.Printf("writing file %s\n", romFileKey)
+	ioutil.WriteFile(romFileKey, romBytes, 0644)
+
+	totalInpPreBytes := append(append(savHashBytes, inpHashBytes...), romHashBytes...)
+	totalInpHash := crypto.Keccak256Hash(totalInpPreBytes)
+	totalInpHashBytes := totalInpHash.Bytes()
+	totalFileKey := fmt.Sprintf("%s/%s", basedir, totalInpHash)
+	fmt.Printf("writing file %s\n", totalFileKey)
+	ioutil.WriteFile(totalFileKey, totalInpPreBytes, 0644)
 
 	uniram := make(map[uint32](uint32))
 	lastStep := 1
@@ -86,15 +116,8 @@ func main() {
 	// inputs
 	// inputs, err := ioutil.ReadFile(fmt.Sprintf("%s/input", root))
 	// check(err)
-	inputBytes := i32tobrev(uint32(inputNum))
-	fmt.Printf("%x\n", inputBytes)
-	inputHash := crypto.Keccak256Hash(inputBytes)
-	inputHashBytes := inputHash.Bytes()
-	fileKey := fmt.Sprintf("%s/%s", basedir, inputHash)
-	fmt.Printf("writing file %s\n", fileKey)
-	ioutil.WriteFile(fileKey, inputBytes, 0644)
-	LoadData(inputHashBytes, uniram, 0x30000000)
-	mu.MemWrite(0x30000000, inputHashBytes)
+	LoadData(totalInpHashBytes, uniram, 0x30000000)
+	mu.MemWrite(0x30000000, totalInpHashBytes)
 	SyncRegs(mu, uniram)
 
 	mu.Start(0, 0x5ead0004)
@@ -108,7 +131,7 @@ func main() {
 		fmt.Printf("output hash: %x\n", output_hash)
 		SyncRegs(mu, uniram)
 		WriteCheckpoint(uniram, fmt.Sprintf("%s/final.json", basedir), lastStep)
-		data := Hashes{fmt.Sprintf("%x", inputHash), fmt.Sprintf("%x", output_hash)}
+		data := Hashes{fmt.Sprintf("%x", totalInpHash), fmt.Sprintf("%x", output_hash)}
 		hashesFileKey := fmt.Sprintf("%s/hashes.json", basedir)
 		b, _ := json.Marshal(data)
 		ioutil.WriteFile(hashesFileKey, b, 0644)

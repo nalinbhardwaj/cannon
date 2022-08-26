@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 set -e
 
-cd ../minime
+cd ../../worldwide
 export GOOS=linux
 export GOARCH=mips
 export GOMIPS=softfloat
-go build -o ../mipigo/minime
+go build -o ../cannon/mipigo/minime ./cmd/
 
-cd ../mipigo
+cd ../cannon/mipigo
 file minime
 
 if [[ ! -d venv ]]; then
