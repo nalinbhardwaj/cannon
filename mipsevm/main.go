@@ -100,8 +100,15 @@ func main() {
 		}
 		lastStep = step + 1
 	}
+	if target_step < 0 {
+		callback = nil
+	}
 
-	mu := GetHookedUnicorn(basedir, uniram, callback)
+	codeDat, err := ioutil.ReadFile(fn)
+	check(err)
+	codeLen := len(codeDat)
+
+	mu := GetHookedUnicorn(basedir, uniram, callback, codeLen)
 
 	// loop forever to match EVM
 	//mu.MemMap(0x5ead0000, 0x1000)

@@ -70,7 +70,7 @@ func SyncRegs(mu uc.Unicorn, ram map[uint32](uint32)) {
 	WriteRam(ram, REG_HEAP, uint32(heap_start))
 }
 
-func GetHookedUnicorn(root string, ram map[uint32](uint32), callback func(int, uc.Unicorn, map[uint32](uint32))) uc.Unicorn {
+func GetHookedUnicorn(root string, ram map[uint32](uint32), callback func(int, uc.Unicorn, map[uint32](uint32)), code_len int) uc.Unicorn {
 	mu, err := uc.NewUnicorn(uc.ARCH_MIPS, uc.MODE_32|uc.MODE_BIG_ENDIAN)
 	check(err)
 
@@ -154,12 +154,12 @@ func GetHookedUnicorn(root string, ram map[uint32](uint32), callback func(int, u
 				log.Fatal("bad size write to ram")
 			}
 
-		}, 0, 0x80000000)
+		}, 0, uint64(code_len + 1))
 
 		mu.HookAdd(uc.HOOK_CODE, func(mu uc.Unicorn, addr uint64, size uint32) {
 			callback(steps, mu, ram)
 			steps += 1
-		}, 0, 0x80000000)
+		}, 0, uint64(code_len + 1))
 	}
 
 	check(mu.MemMap(0, 0x80000000))
@@ -177,7 +177,7 @@ func LoadMappedFileUnicorn(mu uc.Unicorn, fn string, ram map[uint32](uint32), ba
 func RunUnicorn(fn string, ram map[uint32](uint32), checkIO bool, callback func(int, uc.Unicorn, map[uint32](uint32))) {
 	fmt.Println(checkIO)
 	root := "/tmp/cannon/0_13284469"
-	mu := GetHookedUnicorn(root, ram, callback)
+	mu := GetHookedUnicorn(root, ram, callback, -1)
 
 	// loop forever to match EVM
 	//mu.MemMap(0x5ead0000, 0x1000)
