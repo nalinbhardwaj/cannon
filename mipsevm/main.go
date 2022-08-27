@@ -51,7 +51,7 @@ func main() {
 	target_step, _ := strconv.Atoi(target_step_str)
 	fmt.Printf("target_step %d\n", target_step)
 
-	fn := "mipigo/minime.bin"
+	fn := "/Users/nibnalin/Documents/cannon/mipigo/minime.bin"
 
 	inpFileStub := "PM_CRYSTAL.inp.json"
 	inpFile := fmt.Sprintf("%s/%s", basedir, inpFileStub)
