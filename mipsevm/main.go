@@ -53,7 +53,7 @@ func main() {
 
 	fn := "mipigo/minime.bin"
 
-	inpFileStub := "PM_CRYSTAL.inp"
+	inpFileStub := "PM_CRYSTAL.inp.json"
 	inpFile := fmt.Sprintf("%s/%s", basedir, inpFileStub)
 	inpBytes, err := ioutil.ReadFile(inpFile)
 	check(err)
@@ -62,7 +62,7 @@ func main() {
 	inpFileKey := fmt.Sprintf("%s/%s", basedir, inpHash)
 	fmt.Printf("writing file %s\n", inpFileKey)
 	ioutil.WriteFile(inpFileKey, inpBytes, 0644)
-	savFileStub := "PM_CRYSTAL.sav"
+	savFileStub := "PM_CRYSTAL-previous.sav"
 	savFile := fmt.Sprintf("%s/%s", basedir, savFileStub)
 	savBytes, err := ioutil.ReadFile(savFile)
 	check(err)
