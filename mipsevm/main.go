@@ -35,11 +35,31 @@ func i32tobrev(val uint32) []byte {
 }
 
 type Hashes struct {
+	InputData int
 	InputHash string
 	OutputHash string
 }
 
-func run_uni(basedir string, programFile string, target_step int, inputNum int){
+func main() {
+	basedir := os.Getenv("BASEDIR")
+	if len(basedir) == 0 {
+		basedir = "tmp/cannon/minime"
+	}
+	fmt.Printf("base dir %s", basedir);
+	target_step_str := os.Getenv("TARGET_STEP")
+	if len(target_step_str) == 0 {
+		target_step_str = "-1"
+	}
+	target_step, _ := strconv.Atoi(target_step_str)
+	fmt.Printf("target_step %d\n", target_step)
+
+	fn := "mipigo/minime.bin"
+
+	inputNum := 72
+	if len(os.Args) > 1 {
+		inputNum, _ = strconv.Atoi(os.Args[1])
+	}
+
 	uniram := make(map[uint32](uint32))
 	lastStep := 1
 
@@ -62,7 +82,7 @@ func run_uni(basedir string, programFile string, target_step int, inputNum int){
 
 	// load into ram
 	ZeroRegisters(uniram)
-	LoadMappedFileUnicorn(mu, programFile, uniram, 0)
+	LoadMappedFileUnicorn(mu, fn, uniram, 0)
 	WriteCheckpoint(uniram, fmt.Sprintf("%s/golden.json", basedir), -1)
 
 	// inputs
@@ -90,31 +110,11 @@ func run_uni(basedir string, programFile string, target_step int, inputNum int){
 		fmt.Printf("output hash: %x\n", output_hash)
 		SyncRegs(mu, uniram)
 		WriteCheckpoint(uniram, fmt.Sprintf("%s/final.json", basedir), lastStep)
-		data := Hashes{fmt.Sprintf("%x", inputHash), fmt.Sprintf("%x", output_hash)}
+		// fmt.Println("done checkpoint")
+		data := Hashes{inputNum, fmt.Sprintf("%x", inputHash), fmt.Sprintf("%x", output_hash)}
 		hashesFileKey := fmt.Sprintf("%s/hashes.json", basedir)
 		b, _ := json.Marshal(data)
+		// fmt.Println("hashes file: %s", b)
 		ioutil.WriteFile(hashesFileKey, b, 0644)
 	}
-}
-
-func main() {
-	basedir := os.Getenv("BASEDIR")
-	if len(basedir) == 0 {
-		basedir = "tmp/cannon/minime"
-	}
-	target_step_str := os.Getenv("TARGET_STEP")
-	if len(target_step_str) == 0 {
-		target_step_str = "-1"
-	}
-	target_step, _ := strconv.Atoi(target_step_str)
-	fmt.Printf("target_step %d\n", target_step)
-
-	fn := "mipigo/minime.bin"
-
-	inputNum := 72
-	if len(os.Args) > 1 {
-		inputNum, _ = strconv.Atoi(os.Args[1])
-	}
-	run_uni(basedir, fn, target_step, inputNum)
-
 }

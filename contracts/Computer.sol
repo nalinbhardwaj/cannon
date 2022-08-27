@@ -50,6 +50,28 @@ contract Computer {
     mem = _mips.m();
   }
 
+  struct Move {
+    bool pressed;
+    bool buttonA;
+    bool buttonB;
+    bool buttonC;
+    bool buttonD;
+    bool buttonE;
+    bool buttonF;
+    bool buttonG;
+    bool buttonH;
+  }
+
+  Move[] moves;
+
+  /// @notice Emitted when a new challenge is created.
+  event NewMove(uint index, Move move);
+
+  function addMove(Move calldata m) public {
+    moves.push(m);
+    emit NewMove(moves.length-1, m);
+  }
+
   enum ChallengeState{ NONE, BINARY_SEARCH, CHALLENGER_WINS, DEFENDER_WINS}
 
   struct ChallengeData {
@@ -130,6 +152,11 @@ contract Computer {
 
     emit ChallengeCreated(challengeId);
     return challengeId;
+  }
+
+
+  function getComputationIDFromChallengeId(uint256 challengeID) public view returns (uint256) {
+    return challenges[challengeID].computationId;
   }
 
   /// @notice Calling `initiateChallenge`, `confirmStateTransition` or `denyStateTransition requires
@@ -354,6 +381,7 @@ contract Computer {
       address publisher;
       uint publishTimestamp;
       bytes32 initialStateHash;
+      uint256 input;
       bytes32 inputHash;
       bytes32 outputHash;
   }
@@ -365,13 +393,15 @@ contract Computer {
   /// @notice Emitted when a new computation is created.
   event ComputationCreated(uint256 computationId, bytes32 initialStateHash);
 
-  function publishComputation(bytes32 initialStateHash, bytes32 inputHash, bytes32 outputHash) public returns (uint256){    
+  function publishComputation(bytes32 initialStateHash, uint256 input, bytes32 inputHash, bytes32 outputHash) public returns (uint256){    
+      // require(keccak256(abi.encodePacked(input)) == inputHash, "input hash doesn't match");
       uint256 computationId = lastComputationId++;
       Computation storage c = computations[computationId];
 
       c.publisher = msg.sender;
       c.publishTimestamp = block.timestamp;
       c.initialStateHash = initialStateHash;
+      c.input = input;
       c.inputHash = inputHash;
       c.outputHash = outputHash;
 
@@ -379,10 +409,10 @@ contract Computer {
       return computationId;
   }
 
-  function getComputationData(uint256 computationId) public view returns (bytes32, bytes32){
+  function getComputationData(uint256 computationId) public view returns (uint256, bytes32){
       Computation storage c = computations[computationId];
       require(c.publishTimestamp > 0, "Computation ID doesn't not exist");
-      return (c.inputHash, c.outputHash);
+      return (c.input, c.outputHash);
   }
 
   function isVerified(uint256 computationId) public view returns (bool) {

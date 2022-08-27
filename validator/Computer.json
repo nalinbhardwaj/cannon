@@ -82,6 +82,72 @@
 		"type": "event"
 	},
 	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "index",
+				"type": "uint256"
+			},
+			{
+				"components": [
+					{
+						"internalType": "bool",
+						"name": "pressed",
+						"type": "bool"
+					},
+					{
+						"internalType": "bool",
+						"name": "buttonA",
+						"type": "bool"
+					},
+					{
+						"internalType": "bool",
+						"name": "buttonB",
+						"type": "bool"
+					},
+					{
+						"internalType": "bool",
+						"name": "buttonC",
+						"type": "bool"
+					},
+					{
+						"internalType": "bool",
+						"name": "buttonD",
+						"type": "bool"
+					},
+					{
+						"internalType": "bool",
+						"name": "buttonE",
+						"type": "bool"
+					},
+					{
+						"internalType": "bool",
+						"name": "buttonF",
+						"type": "bool"
+					},
+					{
+						"internalType": "bool",
+						"name": "buttonG",
+						"type": "bool"
+					},
+					{
+						"internalType": "bool",
+						"name": "buttonH",
+						"type": "bool"
+					}
+				],
+				"indexed": false,
+				"internalType": "struct Computer.Move",
+				"name": "move",
+				"type": "tuple"
+			}
+		],
+		"name": "NewMove",
+		"type": "event"
+	},
+	{
 		"inputs": [],
 		"name": "BINARY_SEARCH_TIMEOUT",
 		"outputs": [
@@ -105,6 +171,66 @@
 			}
 		],
 		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"components": [
+					{
+						"internalType": "bool",
+						"name": "pressed",
+						"type": "bool"
+					},
+					{
+						"internalType": "bool",
+						"name": "buttonA",
+						"type": "bool"
+					},
+					{
+						"internalType": "bool",
+						"name": "buttonB",
+						"type": "bool"
+					},
+					{
+						"internalType": "bool",
+						"name": "buttonC",
+						"type": "bool"
+					},
+					{
+						"internalType": "bool",
+						"name": "buttonD",
+						"type": "bool"
+					},
+					{
+						"internalType": "bool",
+						"name": "buttonE",
+						"type": "bool"
+					},
+					{
+						"internalType": "bool",
+						"name": "buttonF",
+						"type": "bool"
+					},
+					{
+						"internalType": "bool",
+						"name": "buttonG",
+						"type": "bool"
+					},
+					{
+						"internalType": "bool",
+						"name": "buttonH",
+						"type": "bool"
+					}
+				],
+				"internalType": "struct Computer.Move",
+				"name": "m",
+				"type": "tuple"
+			}
+		],
+		"name": "addMove",
+		"outputs": [],
+		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
@@ -229,6 +355,11 @@
 				"type": "bytes32"
 			},
 			{
+				"internalType": "uint256",
+				"name": "input",
+				"type": "uint256"
+			},
+			{
 				"internalType": "bytes32",
 				"name": "inputHash",
 				"type": "bytes32"
@@ -279,14 +410,33 @@
 		"name": "getComputationData",
 		"outputs": [
 			{
-				"internalType": "bytes32",
+				"internalType": "uint256",
 				"name": "",
-				"type": "bytes32"
+				"type": "uint256"
 			},
 			{
 				"internalType": "bytes32",
 				"name": "",
 				"type": "bytes32"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "challengeID",
+				"type": "uint256"
+			}
+		],
+		"name": "getComputationIDFromChallengeId",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
 			}
 		],
 		"stateMutability": "view",
@@ -452,6 +602,11 @@
 				"internalType": "bytes32",
 				"name": "initialStateHash",
 				"type": "bytes32"
+			},
+			{
+				"internalType": "uint256",
+				"name": "input",
+				"type": "uint256"
 			},
 			{
 				"internalType": "bytes32",
